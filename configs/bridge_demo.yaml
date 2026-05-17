@@ -1,0 +1,18 @@
+env:
+  env_name: Lift
+  robots: Panda
+  control_freq: 20
+  horizon: 200
+  use_object_obs: true
+
+run:
+  steps: 10
+  render_every: 1
+  output_dir: outputs/bridge_demo
+  width: 640
+  height: 480
+  samples: 64
+  seed: 0
+  action_scale: 0.35
+  action_repeat: 20
+  robot_asset_dir: assets/robot_asset/franka_emika_panda

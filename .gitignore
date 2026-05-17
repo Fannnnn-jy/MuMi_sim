@@ -1,0 +1,4 @@
+thirdparty/
+__pycache__/
+*.py[cod]
+outputs/
