@@ -16,12 +16,16 @@
 
 [x] 暴露深度渲染和 error map 接口。
 
+## 2026-05-21
+
+[x] IK
+
+[x] controlling pipeline and gt policy
+
+[x] data collector for imitation learning: Junyi will write sampling methods in docs later.
+
+[ ] prepare data using multiprocess (loading...)
+
 # TODO
 
-[ ] cube-lifting 强化学习环境搭建。
-
-[ ] Dense reward 设置
-
-[ ] 不同主动光渲染图处理
-
-[ ] 初步训练抓取
+[ ] simple imitation learning training

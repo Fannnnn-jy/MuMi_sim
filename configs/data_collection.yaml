@@ -1,0 +1,37 @@
+
+# configs/collect.yaml
+grpper_light:
+
+collection:
+  n_samples: 100000
+  n_blender_workers: 4          # 根据 GPU/CPU 数量调整
+  seed: 42
+
+workspace:
+  # cube 随机范围（相对桌面中心，单位 m）
+  cube_x_range: [-0.15, 0.15]
+  cube_y_range: [-0.10, 0.10]
+  cube_z_fixed: 0.812           # 桌面高度，实测填入
+
+  # 夹爪随机范围
+  ee_x_range: [-0.20, 0.20]
+  ee_y_range: [-0.15, 0.15]
+  ee_z_range: [0.85, 1.20]      # 桌面以上合理高度范围
+
+oracle:
+  xy_threshold: 0.005           # 水平对齐阈值（m）
+  xy_threshold_noise: 0.002     # 阈值随机扰动
+  pregrasp_height: 0.08         # cube 正上方目标高度
+  max_delta: 0.05               # 单步最大位移（m）
+
+render:
+  image_size: 512
+  do_mujoco: true
+  save_depth: true
+  depth_formats: [npy, exr, png]
+
+output:
+  root: "datasets/raw/v1"
+  images_dir: "images"
+  depth_dir:  "depth"
+  meta_file:  "meta.jsonl"      # 每条样本的元信息，jsonlines 格式

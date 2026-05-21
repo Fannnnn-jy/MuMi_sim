@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 from __future__ import annotations
+import os
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 import argparse
 import json
@@ -24,12 +26,13 @@ WIDTH = 512
 HEIGHT = 512
 SAMPLES = 64
 CAMERA_NAME = "agentview"
-SEED = 0
+SEED = 42
 ROBOT_ASSET_DIR = "assets/robot_asset/franka_emika_panda"
+USE_GPU = True
 # robosuite Lift reset 会用 z_offset=0.01 让 cube 初始悬空 1cm。
 # 为了渲染“落稳后的同一个 MuJoCo 物理世界”，先推进 MuJoCo，再同时采集 MuJoCo / Blender。
-SETTLE_STEPS = 100
-RENDER_DEPTH = False
+SETTLE_STEPS = 0
+RENDER_DEPTH = True
 
 # 夹爪灯光硬编码配置：
 # - GRIPPER_LIGHT_TYPE: "POINT" 为全向点光源；"SPOT" 为射灯。
@@ -56,6 +59,7 @@ def main() -> None:
         camera_name=CAMERA_NAME,
         seed=SEED,
         robot_asset_dir=ROBOT_ASSET_DIR,
+        use_gpu=USE_GPU,
         settle_steps=SETTLE_STEPS,
         render_depth=RENDER_DEPTH,
         gripper_light_type=GRIPPER_LIGHT_TYPE,

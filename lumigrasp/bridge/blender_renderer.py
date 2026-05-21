@@ -9,6 +9,8 @@ from .panda_assets import MeshSpec, load_panda_visual_meshes
 
 def _import_bpy():
     import bpy  # type: ignore
+    bpy.context.scene.render.threads_mode = "FIXED"
+    bpy.context.scene.render.threads = 48
 
     return bpy
 
@@ -36,7 +38,7 @@ class PrimitiveBlenderRenderer:
         width: int = 640,
         height: int = 480,
         samples: int = 64,
-        use_gpu: bool = False,
+        use_gpu: bool = True,
         robot_asset_dir: str | Path | None = "assets/robot_asset/franka_emika_panda",
         robosuite_asset_dir: str | Path = "assets/robosuite_assets",
         gripper_light_type: str = "SPOT",
@@ -62,6 +64,12 @@ class PrimitiveBlenderRenderer:
         self.robot_mesh_specs = self._load_robot_mesh_specs()
         self.objects: dict[str, object] = {}
         self.arena_objects: dict[str, object] = {}
+        self.gripper_finger_lights: dict[str, object] = {}
+        self.gripper_light_markers: dict[str, object] = {}
+        self.gripper_finger_light_states: dict[str, bool | None] = {
+            "left": None,
+            "right": None,
+        }
         self._gripper_lights_added = False
         self._imported_mesh_count = 0
 
@@ -81,7 +89,7 @@ class PrimitiveBlenderRenderer:
         scene.view_settings.exposure = -0.45
         scene.view_settings.gamma = 1.0
         if self.use_gpu:
-            scene.cycles.device = "GPU"
+            self._configure_cycles_gpu()
 
         bpy.ops.object.light_add(type="AREA", location=(0.0, -3.5, 5.0))
         key = bpy.context.object
@@ -136,16 +144,21 @@ class PrimitiveBlenderRenderer:
         show_marker: bool = False,
         marker_length: float = 0.04,
         marker_radius: float = 0.004,
-    ) -> None:
+    ) -> object | None:
         parent = self.objects.get(parent_body_name)
         if parent is None:
-            return
+            return None
 
         bpy = self.bpy
         light_kind = light_type.upper()
+        light_name = f"{parent_body_name}_{light_kind.lower()}_light"
+        existing_light = self.bpy.data.objects.get(light_name)
+        if existing_light is not None:
+            return existing_light
+
         bpy.ops.object.light_add(type=light_kind, location=(0.0, 0.0, 0.0))
         light = bpy.context.object
-        light.name = f"{parent_body_name}_{light_kind.lower()}_light"
+        light.name = light_name
         light.data.energy = energy
         light.data.color = color
         if light_kind == "SPOT":
@@ -160,9 +173,10 @@ class PrimitiveBlenderRenderer:
         light.matrix_parent_inverse.identity()
         light.location = local_position
         light.rotation_euler = light_rotation
+        self._set_light_object_enabled(light, False)
 
         if show_marker:
-            self._add_light_marker(
+            marker = self._add_light_marker(
                 parent=parent,
                 name=f"{light.name}_marker",
                 local_position=local_position,
@@ -171,12 +185,15 @@ class PrimitiveBlenderRenderer:
                 length=marker_length,
                 radius=marker_radius,
             )
+            self.gripper_light_markers[parent_body_name] = marker
+            self._set_object_visible(marker, False)
+        return light
 
     def add_gripper_finger_lights(
         self,
         left_body_name: str = "gripper0_right_leftfinger",
         right_body_name: str = "gripper0_right_rightfinger",
-        local_position: tuple[float, float, float] = (0.0, 0.0, 0.04),
+        local_position: tuple[float, float, float] = (0.0, 0.0, 0.055),
         energy: float = 35.0,
         size: float = 0.015,
         light_type: str = "SPOT",
@@ -184,7 +201,7 @@ class PrimitiveBlenderRenderer:
         spot_blend: float = 0.35,
         show_marker: bool = False,
     ) -> None:
-        self.add_gripper_light(
+        left_light = self.add_gripper_light(
             parent_body_name=left_body_name,
             local_position=local_position,
             energy=energy,
@@ -195,7 +212,7 @@ class PrimitiveBlenderRenderer:
             spot_blend=spot_blend,
             show_marker=show_marker,
         )
-        self.add_gripper_light(
+        right_light = self.add_gripper_light(
             parent_body_name=right_body_name,
             local_position=local_position,
             energy=energy,
@@ -206,6 +223,28 @@ class PrimitiveBlenderRenderer:
             spot_blend=spot_blend,
             show_marker=show_marker,
         )
+        if left_light is not None:
+            self.gripper_finger_lights["left"] = left_light
+            left_marker = self.gripper_light_markers.get(left_body_name)
+            if left_marker is not None:
+                self.gripper_light_markers["left"] = left_marker
+        if right_light is not None:
+            self.gripper_finger_lights["right"] = right_light
+            right_marker = self.gripper_light_markers.get(right_body_name)
+            if right_marker is not None:
+                self.gripper_light_markers["right"] = right_marker
+
+    def set_gripper_finger_lights(self, finger: str, enabled: bool) -> None:
+        """暴露 renderer 灯光控制接口"""
+        if finger not in {"left", "right"}:
+            raise ValueError(f"Unsupported gripper finger light: {finger!r}")
+        self.gripper_finger_light_states[finger] = enabled
+        light = self.gripper_finger_lights.get(finger)
+        if light is not None:
+            self._set_light_object_enabled(light, enabled)
+        marker = self.gripper_light_markers.get(finger)
+        if marker is not None:
+            self._set_object_visible(marker, enabled)
 
     def ensure_default_objects(self, poses: Mapping[str, Pose]) -> None:
         for name in poses:
@@ -264,6 +303,25 @@ class PrimitiveBlenderRenderer:
         obj.rotation_mode = "QUATERNION"
         obj.rotation_quaternion = geom.quaternion_wxyz
 
+    def _sync_debug_sphere(
+        self,
+        name: str,
+        position: tuple[float, float, float],
+        radius: float = 0.012,
+        color: tuple[float, float, float, float] = (0.0, 1.0, 0.0, 1.0),
+    ) -> None:
+        mat_name = f"{name}_mat"
+        if mat_name not in self.bpy.data.materials:
+            self._make_emission_material(mat_name, color, strength=3.0)
+        obj = self.objects.get(name)
+        if obj is None:
+            self.bpy.ops.mesh.primitive_uv_sphere_add(segments=24, ring_count=12, radius=radius)
+            obj = self.bpy.context.object
+            obj.name = name
+            obj.data.materials.append(self.bpy.data.materials[mat_name])
+            self.objects[name] = obj
+        obj.location = position
+
 
     def set_camera_from_mujoco(self, camera: CameraState) -> None:
         scene_camera = self.bpy.context.scene.camera
@@ -284,18 +342,117 @@ class PrimitiveBlenderRenderer:
         # print("angle_y", math.degrees(scene_camera.data.angle_y))
 
     def render(self, output_path: str | Path) -> Path:
+        self._validate_gripper_finger_light_states()
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        self.bpy.context.scene.render.filepath = str(path)
-        self.bpy.ops.render.render(write_still=True)
+
+        scene = self.bpy.context.scene
+        image_settings = scene.render.image_settings
+        previous = (
+            scene.render.filepath,
+            image_settings.file_format,
+            image_settings.color_mode,
+            image_settings.color_depth,
+        )
+        try:
+            scene.render.filepath = str(path)
+            if path.suffix.lower() == ".exr":
+                image_settings.file_format = "OPEN_EXR"
+                image_settings.color_mode = "RGB"
+                image_settings.color_depth = "32"
+            self.bpy.ops.render.render(write_still=True)
+        finally:
+            (
+                scene.render.filepath,
+                image_settings.file_format,
+                image_settings.color_mode,
+                image_settings.color_depth,
+            ) = previous
         return path
 
-    def render_depth(self, output_path: str | Path) -> object:
-        import array
+    def render_rgb_outputs(self, raw_exr_path: str | Path, preview_png_path: str | Path) -> dict[str, Path]:
+        self._validate_gripper_finger_light_states()
+        raw_path = Path(raw_exr_path)
+        preview_path = Path(preview_png_path)
+        raw_path.parent.mkdir(parents=True, exist_ok=True)
+        preview_path.parent.mkdir(parents=True, exist_ok=True)
+
+        scene = self.bpy.context.scene
+        image_settings = scene.render.image_settings
+        previous = (
+            scene.render.filepath,
+            image_settings.file_format,
+            image_settings.color_mode,
+            image_settings.color_depth,
+        )
+        try:
+            self.bpy.ops.render.render(write_still=False)
+            render_result = self.bpy.data.images["Render Result"]
+
+            scene.render.filepath = str(raw_path)
+            image_settings.file_format = "OPEN_EXR"
+            image_settings.color_mode = "RGB"
+            image_settings.color_depth = "32"
+            render_result.save_render(str(raw_path), scene=scene)
+
+            scene.render.filepath = str(preview_path)
+            image_settings.file_format = "PNG"
+            image_settings.color_mode = "RGB"
+            image_settings.color_depth = "8"
+            render_result.save_render(str(preview_path), scene=scene)
+        finally:
+            (
+                scene.render.filepath,
+                image_settings.file_format,
+                image_settings.color_mode,
+                image_settings.color_depth,
+            ) = previous
+        return {"raw_exr_path": raw_path, "preview_png_path": preview_path}
+
+    def _configure_cycles_gpu(self) -> None:
+        bpy = self.bpy
+        scene = bpy.context.scene
+        scene.cycles.device = "GPU"
+
+        try:
+            cycles_preferences = bpy.context.preferences.addons["cycles"].preferences
+        except Exception as exc:
+            print(f"Warning: could not access Blender Cycles preferences for GPU rendering: {exc}")
+            return
+
+        for compute_device_type in ("OPTIX", "CUDA", "HIP", "METAL", "ONEAPI"):
+            try:
+                cycles_preferences.compute_device_type = compute_device_type
+                if hasattr(cycles_preferences, "refresh_devices"):
+                    cycles_preferences.refresh_devices()
+                else:
+                    cycles_preferences.get_devices()
+            except Exception:
+                continue
+
+            devices = list(getattr(cycles_preferences, "devices", ()))
+            gpu_devices = [
+                device for device in devices
+                if getattr(device, "type", "CPU") != "CPU"
+            ]
+            if not gpu_devices:
+                continue
+
+            for device in devices:
+                try:
+                    device.use = getattr(device, "type", "CPU") != "CPU"
+                except Exception:
+                    pass
+
+            gpu_names = ", ".join(getattr(device, "name", "GPU") for device in gpu_devices)
+            print(f"Blender Cycles GPU rendering enabled: {compute_device_type} ({gpu_names})")
+            return
+
+        print("Warning: Blender Cycles GPU rendering was requested, but no GPU device was enabled.")
+
+    def render_depth(self, output_path: str | Path) -> Path:
+        self._validate_gripper_finger_light_states()
         import glob
-        import numpy as np
-        import OpenEXR
-        import Imath
 
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -305,52 +462,33 @@ class PrimitiveBlenderRenderer:
         previous_use_compositing = scene.render.use_compositing
         previous_use_pass_z = scene.view_layers[0].use_pass_z
 
-        scene.view_layers[0].use_pass_z = True
-        scene.render.use_compositing = True
         tree = self.bpy.data.node_groups.new("LumiGraspDepthCompositor", "CompositorNodeTree")
-        scene.compositing_node_group = tree
-        render_layers = tree.nodes.new(type="CompositorNodeRLayers")
-        output = tree.nodes.new(type="CompositorNodeOutputFile")
-        output.directory = str(path.parent)
-        output.file_name = path.stem
-        output.file_output_items.clear()
-        item = output.file_output_items.new("FLOAT", "Depth")
-        item.format.file_format = "OPEN_EXR"
-        item.format.color_depth = "32"
-        tree.links.new(render_layers.outputs["Depth"], output.inputs["Depth"])
+        try:
+            scene.view_layers[0].use_pass_z = True
+            scene.render.use_compositing = True
+            scene.compositing_node_group = tree
+            render_layers = tree.nodes.new(type="CompositorNodeRLayers")
+            output = tree.nodes.new(type="CompositorNodeOutputFile")
+            output.directory = str(path.parent)
+            output.file_name = path.stem
+            output.file_output_items.clear()
+            item = output.file_output_items.new("FLOAT", "Depth")
+            item.format.file_format = "OPEN_EXR"
+            item.format.color_depth = "32"
+            tree.links.new(render_layers.outputs["Depth"], output.inputs["Depth"])
 
-        existing = set(glob.glob(str(path.parent / f"{path.stem}*")))
-        self.bpy.ops.render.render(write_still=False)
-        produced = sorted(set(glob.glob(str(path.parent / f"{path.stem}*"))) - existing)
-        exr_path = path if path.exists() else Path(produced[0])
-        if exr_path != path:
-            exr_path.replace(path)
-
-        depth = self._read_exr_float(path)
-
-        scene.compositing_node_group = previous_compositing_group
-        scene.render.use_compositing = previous_use_compositing
-        scene.view_layers[0].use_pass_z = previous_use_pass_z
-        self.bpy.data.node_groups.remove(tree)
-        return depth
-
-    def _read_exr_float(self, path: Path) -> object:
-        import array
-        import numpy as np
-        import OpenEXR
-        import Imath
-
-        exr = OpenEXR.InputFile(str(path))
-        header = exr.header()
-        data_window = header["dataWindow"]
-        width = data_window.max.x - data_window.min.x + 1
-        height = data_window.max.y - data_window.min.y + 1
-        channels = list(header["channels"].keys())
-        channel = "Depth" if "Depth" in channels else channels[0]
-        raw = exr.channel(channel, Imath.PixelType(Imath.PixelType.FLOAT))
-        values = array.array("f")
-        values.frombytes(raw)
-        return np.asarray(values, dtype=np.float32).reshape(height, width)
+            existing = set(glob.glob(str(path.parent / f"{path.stem}*")))
+            self.bpy.ops.render.render(write_still=False)
+            produced = sorted(set(glob.glob(str(path.parent / f"{path.stem}*"))) - existing)
+            exr_path = path if path.exists() else Path(produced[0])
+            if exr_path != path:
+                exr_path.replace(path)
+            return path
+        finally:
+            scene.compositing_node_group = previous_compositing_group
+            scene.render.use_compositing = previous_use_compositing
+            scene.view_layers[0].use_pass_z = previous_use_pass_z
+            self.bpy.data.node_groups.remove(tree)
 
     def _make_material(
         self,
@@ -388,6 +526,27 @@ class PrimitiveBlenderRenderer:
             mat.node_tree.links.new(tex_node.outputs["Color"], bsdf.inputs["Base Color"])
 
         return mat
+
+    def _set_light_object_enabled(self, obj: object, enabled: bool) -> None:
+        obj.hide_render = not enabled
+        obj.hide_viewport = not enabled
+
+    def _set_object_visible(self, obj: object, visible: bool) -> None:
+        obj.hide_render = not visible
+        obj.hide_viewport = not visible
+
+    def _validate_gripper_finger_light_states(self) -> None:
+        unknown = [
+            finger
+            for finger, enabled in self.gripper_finger_light_states.items()
+            if enabled is None
+        ]
+        if unknown:
+            missing = ", ".join(unknown)
+            raise RuntimeError(
+                "Gripper finger light state is unknown. "
+                f"Call set_gripper_finger_lights() for: {missing}"
+            )
 
     def _add_cube(
         self,

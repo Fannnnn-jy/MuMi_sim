@@ -1,6 +1,10 @@
 # LumiGrasp
+<<<<<<< Updated upstream
+=======
 
 ## 1. Set Up
+
+### conda environment
 
 初步调研，使用较新的稳定版本 `python=3.11` `bpy=5.0.1` 
 ```
@@ -13,7 +17,18 @@ python -m pip install bpy
 pip install openexr imath h5py # for blender Z buffer 读取
 ```
 
-`ln -s ../Opensource_Forks/MuBlE LumiGrasp/third_party`
+### related repos
+
+```
+cd ../Opensource_Forks
+git clone https://github.com/michaal94/MuBlE
+git clone https://github.com/ARISE-Initiative/robomimic
+ln -s MuBlE /path/to/LumiGrasp/thrid_party
+ln -s robomimic /path/to/LumiGrasp/thrid_party
+cd ../LumiGrasp
+```
+
+
 
 ## 2. Bridge Demo
 
@@ -32,3 +47,4 @@ pip install openexr imath h5py # for blender Z buffer 读取
 ## 3. Progress
 
 详见文档 `docs/progress.md`
+>>>>>>> Stashed changes

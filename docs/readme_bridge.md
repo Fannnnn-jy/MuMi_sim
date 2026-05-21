@@ -36,6 +36,7 @@ MuBlE 的思路对位姿同步和 Blender 端对象管理有参考价值，但�
 
 - `scripts/run_static_bridge_demo.py`：渲染同一个初始 state 的 MuJoCo 原生图和 Blender 图，用于检查两者是否对齐。
 - `scripts/run_bridge_demo.py`（调试中）：执行 random action，并按帧同步 MuJoCo 状态到 Blender。
+- 注意：以上 demo 脚本运行需要图形化界面，测试使用 turbovnc。
 
 配置和输出：
 

@@ -45,6 +45,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--action-scale", type=float, default=0.35)
     parser.add_argument("--action-repeat", type=int, default=20)
     parser.add_argument("--no-render", action="store_true")
+    parser.add_argument("--cpu-render", action="store_true", help="Use CPU rendering instead of Blender Cycles GPU rendering.")
     parser.add_argument("--robot-asset-dir", type=str, default="assets/robot_asset/franka_emika_panda")
     parser.add_argument("--env-name", type=str, default="Lift")
     parser.add_argument("--robots", type=str, default="Panda")
@@ -64,6 +65,7 @@ def main() -> None:
         action_scale=args.action_scale,
         action_repeat=args.action_repeat,
         no_render=args.no_render,
+        use_gpu=not args.cpu_render,
         robot_asset_dir=args.robot_asset_dir,
         settle_steps=SETTLE_STEPS,
         gripper_light_type=GRIPPER_LIGHT_TYPE,
