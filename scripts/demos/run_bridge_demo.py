@@ -8,11 +8,11 @@ import json
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from lumigrasp.bridge.pipeline import BridgeRunConfig, run_bridge_demo
+from lumigrasp.bridge.pipeline_demo import BridgeRunConfig, run_bridge_demo
 from lumigrasp.bridge.robosuite_env import RobosuiteEnvConfig
 
 # 夹爪灯光硬编码配置：

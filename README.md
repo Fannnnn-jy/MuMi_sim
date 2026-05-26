@@ -1,12 +1,9 @@
 # LumiGrasp
-<<<<<<< Updated upstream
-=======
 
 ## 1. Set Up
 
 ### conda environment
 
-初步调研，使用较新的稳定版本 `python=3.11` `bpy=5.0.1` 
 ```
 conda create -n mubl_sim python=3.11 -y
 conda activate mubl_sim
@@ -14,7 +11,11 @@ conda activate mubl_sim
 python -m pip install -U pip
 python -m pip install bpy
 
-pip install openexr imath h5py # for blender Z buffer 读取
+pip install openexr imath h5py # for blender Z buffer reading
+pip install matplotlib # for data visualization
+
+pip install torchvision==0.21.0 torchaudio==2.6.0 \
+  --index-url https://download.pytorch.org/whl/cu124 # for training
 ```
 
 ### related repos
@@ -23,7 +24,7 @@ pip install openexr imath h5py # for blender Z buffer 读取
 cd ../Opensource_Forks
 git clone https://github.com/michaal94/MuBlE
 git clone https://github.com/ARISE-Initiative/robomimic
-ln -s MuBlE /path/to/LumiGrasp/thrid_party
+ln -s MuBlE /path/to/LumiGrasp/third_party
 ln -s robomimic /path/to/LumiGrasp/thrid_party
 cd ../LumiGrasp
 ```
@@ -32,19 +33,24 @@ cd ../LumiGrasp
 
 ## 2. Bridge Demo
 
-当前第一版桥接目标是：robosuite / MuJoCo 负责物理，Blender 负责渲染，项目代码只做状态读取和位姿同步，不修改三方库。
+In our bridge setup:
 
-环境确认：
+- robosuite / MuJoCo handle physics simulation
+- Blender handles rendering
 
-- -name `mubl_sim`
+We use a bridge to synchronize the two environments without modifying the source code of these site-packages.
+
+Run `conda list` and check：
+
+- environment name `mubl_sim`
 - Python 3.11
 - MuJoCo 3.8.1
 - robosuite 1.5.2
 - bpy 5.0.1
+- torch 2.6.0 + torchvision 0.21.0 + cu124
 
-详见文档 `docs/readme_bridge.md`
+More details, refer to `docs/readme_bridge.md`
 
 ## 3. Progress
 
-详见文档 `docs/progress.md`
->>>>>>> Stashed changes
+Refer to `docs/progress.md`

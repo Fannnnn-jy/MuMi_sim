@@ -8,7 +8,7 @@ import numpy as np
 import time
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
@@ -29,7 +29,7 @@ CAMERA_NAME = "agentview"
 SEED = 42
 ROBOT_ASSET_DIR = "assets/robot_asset/franka_emika_panda"
 SETTLE_STEPS = 100
-USE_GPU = False
+USE_GPU = True
 RENDER_BLENDER = True
 RENDER_MUJOCO = True
 RENDER_DEPTH = True
@@ -75,7 +75,7 @@ THETA_THRESHOLD_NOISE = 0.0
 PREGRASP_CLEARANCE = 0.08
 GRASP_CUBE_HALF_SIZE = 0.021
 MAX_DELTA_POS = 0.5
-POSITION_GAIN = 12.0
+POSITION_GAIN = 12.0    
 ORIENTATION_GAIN = 2.0
 MAX_ORIENTATION_DELTA = 0.25
 GRIPPER_ACTION_OPEN = 0.0

@@ -84,6 +84,7 @@ class PrimitiveBlenderRenderer:
         scene.render.resolution_x = self.width
         scene.render.resolution_y = self.height
         scene.render.resolution_percentage = 100
+        scene.render.use_persistent_data = True ###
         scene.view_settings.view_transform = "Filmic"
         scene.view_settings.look = "Medium High Contrast"
         scene.view_settings.exposure = -0.45
@@ -341,12 +342,50 @@ class PrimitiveBlenderRenderer:
         # print("angle_x", math.degrees(scene_camera.data.angle_x))
         # print("angle_y", math.degrees(scene_camera.data.angle_y))
 
+    # def render(self, output_path: str | Path) -> Path:
+    #     self._validate_gripper_finger_light_states()
+    #     path = Path(output_path)
+    #     path.parent.mkdir(parents=True, exist_ok=True)
+
+    #     scene = self.bpy.context.scene
+    #     image_settings = scene.render.image_settings
+    #     previous = (
+    #         scene.render.filepath,
+    #         image_settings.file_format,
+    #         image_settings.color_mode,
+    #         image_settings.color_depth,
+    #     )
+    #     try:
+    #         scene.render.filepath = str(path)
+    #         if path.suffix.lower() == ".exr":
+    #             image_settings.file_format = "OPEN_EXR"
+    #             image_settings.color_mode = "RGB"
+    #             image_settings.color_depth = "32"
+    #         self.bpy.ops.render.render(write_still=True)
+    #     finally:
+    #         (
+    #             scene.render.filepath,
+    #             image_settings.file_format,
+    #             image_settings.color_mode,
+    #             image_settings.color_depth,
+    #         ) = previous
+    #     return path
+
     def render(self, output_path: str | Path) -> Path:
+        import time
+        t0 = time.perf_counter()
+        
         self._validate_gripper_finger_light_states()
+        t1 = time.perf_counter()
+        
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
 
         scene = self.bpy.context.scene
+        
+        # 确认 persistent_data 状态
+        print(f"persistent_data: {scene.render.use_persistent_data}")
+        
         image_settings = scene.render.image_settings
         previous = (
             scene.render.filepath,
@@ -354,20 +393,47 @@ class PrimitiveBlenderRenderer:
             image_settings.color_mode,
             image_settings.color_depth,
         )
+        
+        # 注册一次性回调来计时渲染内部阶段
+        def _on_render_pre(scene):
+            scene['__t_pre'] = time.perf_counter()
+        def _on_render_post(scene):
+            scene['__t_post'] = time.perf_counter()
+        
+        self.bpy.app.handlers.render_pre.append(_on_render_pre)
+        self.bpy.app.handlers.render_post.append(_on_render_post)
+        
         try:
             scene.render.filepath = str(path)
             if path.suffix.lower() == ".exr":
                 image_settings.file_format = "OPEN_EXR"
                 image_settings.color_mode = "RGB"
                 image_settings.color_depth = "32"
+            
+            t2 = time.perf_counter()
             self.bpy.ops.render.render(write_still=True)
+            t3 = time.perf_counter()
+            
         finally:
+            self.bpy.app.handlers.render_pre.remove(_on_render_pre)
+            self.bpy.app.handlers.render_post.remove(_on_render_post)
             (
                 scene.render.filepath,
                 image_settings.file_format,
                 image_settings.color_mode,
                 image_settings.color_depth,
             ) = previous
+        
+        t_pre  = scene.get('__t_pre',  t2)
+        t_post = scene.get('__t_post', t3)
+        
+        print(f"validate:          {(t1-t0)*1000:.1f}ms")
+        print(f"setup overhead:    {(t2-t1)*1000:.1f}ms")
+        print(f"scene sync/depsgraph: {(t_pre-t2)*1000:.1f}ms")
+        print(f"actual sampling:   {(t_post-t_pre)*1000:.1f}ms")
+        print(f"write+cleanup:     {(t3-t_post)*1000:.1f}ms")
+        print(f"TOTAL:             {(t3-t0)*1000:.1f}ms")
+        
         return path
 
     def render_rgb_outputs(self, raw_exr_path: str | Path, preview_png_path: str | Path) -> dict[str, Path]:

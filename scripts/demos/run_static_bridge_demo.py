@@ -70,7 +70,7 @@ def main() -> None:
         show_gripper_light_marker=SHOW_GRIPPER_LIGHT_MARKER,
     )
     env_config = RobosuiteEnvConfig(
-        env_name="Lift",
+        env_name="LumiLift",
         robots="Panda",
         has_offscreen_renderer=True,
     )

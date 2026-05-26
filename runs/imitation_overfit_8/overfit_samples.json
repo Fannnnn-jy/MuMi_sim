@@ -1,0 +1,316 @@
+{
+  "mode": "overfit",
+  "n_samples": 8,
+  "data_root": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1",
+  "image_size": 512,
+  "quat_key": "delta_quat_xyzw",
+  "dpos_clip_norm": 10.0,
+  "position_loss_weight": 10.0,
+  "quat_loss_weight": 1.0,
+  "samples": [
+    {
+      "selection_index": 0,
+      "metadata_path": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000000/metadata.json",
+      "sample_dir": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000000",
+      "image_paths": [
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000000/blender_rgb_no_fingerlight.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000000/blender_rgb_blue_only.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000000/blender_rgb_red_only.exr"
+      ],
+      "qpos6": [
+        -0.07605400503055142,
+        0.7226360633597413,
+        0.037328442754534605,
+        -1.96036641404155,
+        -0.03796984819174503,
+        2.5760391980367587
+      ],
+      "target_action": [
+        0.19458358000251844,
+        0.4565452390219746,
+        0.060857827103599,
+        0.004162860608908669,
+        -0.02664412519531127,
+        0.12172325664081518,
+        0.9921976667866548
+      ],
+      "target_delta_xyz": [
+        0.19458358000251844,
+        0.4565452390219746,
+        0.060857827103599
+      ],
+      "target_delta_quat": [
+        0.004162860608908669,
+        -0.02664412519531127,
+        0.12172325664081518,
+        0.9921976667866548
+      ]
+    },
+    {
+      "selection_index": 1,
+      "metadata_path": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000001/metadata.json",
+      "sample_dir": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000001",
+      "image_paths": [
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000001/blender_rgb_no_fingerlight.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000001/blender_rgb_blue_only.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000001/blender_rgb_red_only.exr"
+      ],
+      "qpos6": [
+        0.358023901405684,
+        0.6484063288658971,
+        -0.11474224693398702,
+        -2.372999851209866,
+        0.2581740585880036,
+        2.911602671651892
+      ],
+      "target_action": [
+        0.4495681157501513,
+        -0.09492858026670538,
+        0.19717270082190952,
+        -0.0038218577830467742,
+        -0.00725394623191173,
+        -0.12440483985088575,
+        0.9921976665407081
+      ],
+      "target_delta_xyz": [
+        0.4495681157501513,
+        -0.09492858026670538,
+        0.19717270082190952
+      ],
+      "target_delta_quat": [
+        -0.0038218577830467742,
+        -0.00725394623191173,
+        -0.12440483985088575,
+        0.9921976665407081
+      ]
+    },
+    {
+      "selection_index": 2,
+      "metadata_path": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000002/metadata.json",
+      "sample_dir": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000002",
+      "image_paths": [
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000002/blender_rgb_no_fingerlight.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000002/blender_rgb_blue_only.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000002/blender_rgb_red_only.exr"
+      ],
+      "qpos6": [
+        -0.06890806119360575,
+        0.6597337203753987,
+        0.020876652063210502,
+        -2.424466485973475,
+        -0.045391055064875147,
+        2.992298978144936
+      ],
+      "target_action": [
+        0.4420280494053013,
+        0.09465916788511922,
+        0.21366058474655855,
+        -0.007465063647377122,
+        -0.014763026697813732,
+        -0.12357230104196645,
+        0.9921976679486069
+      ],
+      "target_delta_xyz": [
+        0.4420280494053013,
+        0.09465916788511922,
+        0.21366058474655855
+      ],
+      "target_delta_quat": [
+        -0.007465063647377122,
+        -0.014763026697813732,
+        -0.12357230104196645,
+        0.9921976679486069
+      ]
+    },
+    {
+      "selection_index": 3,
+      "metadata_path": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000003/metadata.json",
+      "sample_dir": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000003",
+      "image_paths": [
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000003/blender_rgb_no_fingerlight.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000003/blender_rgb_blue_only.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000003/blender_rgb_red_only.exr"
+      ],
+      "qpos6": [
+        0.27720220630840176,
+        0.7387703146211825,
+        -0.05996102212422586,
+        -2.357318085288018,
+        0.20814277666125827,
+        3.0002522077672795
+      ],
+      "target_action": [
+        0.4529699582193277,
+        -0.08704025474652809,
+        0.19298241112712852,
+        0.008423781386777315,
+        -0.006221125562931196,
+        0.1242341602358783,
+        0.9921976672691607
+      ],
+      "target_delta_xyz": [
+        0.4529699582193277,
+        -0.08704025474652809,
+        0.19298241112712852
+      ],
+      "target_delta_quat": [
+        0.008423781386777315,
+        -0.006221125562931196,
+        0.1242341602358783,
+        0.9921976672691607
+      ]
+    },
+    {
+      "selection_index": 4,
+      "metadata_path": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000004/metadata.json",
+      "sample_dir": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000004",
+      "image_paths": [
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000004/blender_rgb_no_fingerlight.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000004/blender_rgb_blue_only.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000004/blender_rgb_red_only.exr"
+      ],
+      "qpos6": [
+        0.09004710056990571,
+        0.74705838128159,
+        -0.04115380508960169,
+        -2.048337114412292,
+        0.055905723258390015,
+        2.6969219571893666
+      ],
+      "target_action": [
+        0.15625044418032283,
+        0.36463434938706424,
+        0.30434781080291046,
+        0.01136543157792325,
+        -0.09665407188155406,
+        0.03645928030537265,
+        0.9945851085922095
+      ],
+      "target_delta_xyz": [
+        0.15625044418032283,
+        0.36463434938706424,
+        0.30434781080291046
+      ],
+      "target_delta_quat": [
+        0.01136543157792325,
+        -0.09665407188155406,
+        0.03645928030537265,
+        0.9945851085922095
+      ]
+    },
+    {
+      "selection_index": 5,
+      "metadata_path": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000005/metadata.json",
+      "sample_dir": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000005",
+      "image_paths": [
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000005/blender_rgb_no_fingerlight.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000005/blender_rgb_blue_only.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000005/blender_rgb_red_only.exr"
+      ],
+      "qpos6": [
+        0.23128267247131784,
+        0.9151265051447559,
+        -0.09889193286830604,
+        -1.8287992834952211,
+        0.14356684888566415,
+        2.638017049624668
+      ],
+      "target_action": [
+        0.23674638203849227,
+        -0.054473240753404775,
+        0.43701695234110294,
+        -0.005001663045605965,
+        -0.005261634515115938,
+        -0.1244631896533199,
+        0.992197668305227
+      ],
+      "target_delta_xyz": [
+        0.23674638203849227,
+        -0.054473240753404775,
+        0.43701695234110294
+      ],
+      "target_delta_quat": [
+        -0.005001663045605965,
+        -0.005261634515115938,
+        -0.1244631896533199,
+        0.992197668305227
+      ]
+    },
+    {
+      "selection_index": 6,
+      "metadata_path": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000006/metadata.json",
+      "sample_dir": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000006",
+      "image_paths": [
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000006/blender_rgb_no_fingerlight.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000006/blender_rgb_blue_only.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000006/blender_rgb_red_only.exr"
+      ],
+      "qpos6": [
+        -0.3435324998374536,
+        0.5833932931814718,
+        0.19833499764806675,
+        -2.122392696183201,
+        -0.1756785839106513,
+        2.5870845545839063
+      ],
+      "target_action": [
+        0.39391124852744414,
+        0.29616620574764113,
+        -0.08437717023339902,
+        -0.010790833783377406,
+        -0.01159298557292125,
+        -0.12366466332872929,
+        0.9921976676225144
+      ],
+      "target_delta_xyz": [
+        0.39391124852744414,
+        0.29616620574764113,
+        -0.08437717023339902
+      ],
+      "target_delta_quat": [
+        -0.010790833783377406,
+        -0.01159298557292125,
+        -0.12366466332872929,
+        0.9921976676225144
+      ]
+    },
+    {
+      "selection_index": 7,
+      "metadata_path": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000007/metadata.json",
+      "sample_dir": "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000007",
+      "image_paths": [
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000007/blender_rgb_no_fingerlight.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000007/blender_rgb_blue_only.exr",
+        "/home/ubuntu/Junyi/LumiGrasp/data/pickcube-v1/cube_x_0p00_0p10_y_0p00_0p10/sample_000007/blender_rgb_red_only.exr"
+      ],
+      "qpos6": [
+        0.0018180562653626147,
+        0.6190773906281758,
+        -0.00222598799998159,
+        -2.427671985523319,
+        -0.007232083585717157,
+        2.953557313349458
+      ],
+      "target_action": [
+        0.46452527579973224,
+        0.06789282153620976,
+        0.17206636198581945,
+        0.006213843456375031,
+        -0.01589724877878123,
+        0.12350083519564709,
+        0.9921976664640685
+      ],
+      "target_delta_xyz": [
+        0.46452527579973224,
+        0.06789282153620976,
+        0.17206636198581945
+      ],
+      "target_delta_quat": [
+        0.006213843456375031,
+        -0.01589724877878123,
+        0.12350083519564709,
+        0.9921976664640685
+      ]
+    }
+  ]
+}
