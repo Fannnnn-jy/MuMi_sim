@@ -1,1 +1,2 @@
-# LumiGrasp Monorepo
+# LumiGrasp Monorepo: MuMi_sim
+> exploring mujoco simulation + mistuba rendering......
