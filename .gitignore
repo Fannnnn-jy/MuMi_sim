@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# uv
+.python-version
+
+# Pixi
+.pixi/
+
+# Generated outputs
+outputs/

@@ -1,0 +1,7 @@
+{
+  "light_type": "SPOT",
+  "energy": 1.0,
+  "cutoff_angle": 90.0,
+  "beam_width": 90.0,
+  "show_marker": false
+}
