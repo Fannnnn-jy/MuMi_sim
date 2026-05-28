@@ -37,8 +37,8 @@ from .utils.coords import _quat_wxyz_to_mat, _orientation_delta_axis_angle, _sel
 @dataclass(frozen=True)
 class StaticBridgeRunConfig:
     output_dir: str = "outputs/static_bridge_demo"
-    width: int = 512
-    height: int = 512
+    width: int = 84
+    height: int = 84
     samples: int = 128
     camera_name: str = "agentview"
     seed: int = 0
