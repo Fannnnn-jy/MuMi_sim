@@ -8,11 +8,11 @@ import json
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from lumigrasp.bridge.pipeline import StaticBridgeRunConfig, run_static_bridge_demo
+from lumigrasp.bridge.pipeline_demo import StaticBridgeRunConfig, run_static_bridge_demo
 from lumigrasp.bridge.robosuite_env import RobosuiteEnvConfig
 
 # ------------------------------ 配置项 ---------------------------------
@@ -24,7 +24,7 @@ from lumigrasp.bridge.robosuite_env import RobosuiteEnvConfig
 OUTPUT_DIR = "outputs/static_bridge_demo"
 WIDTH = 512
 HEIGHT = 512
-SAMPLES = 64
+SAMPLES = 64 # 调低并不会显著加快 sample 速度
 CAMERA_NAME = "agentview"
 SEED = 42
 ROBOT_ASSET_DIR = "assets/robot_asset/franka_emika_panda"

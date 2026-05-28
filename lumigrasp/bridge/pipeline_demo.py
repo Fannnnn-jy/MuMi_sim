@@ -279,6 +279,13 @@ def run_static_bridge_demo(
         if run_config.render_depth:
             renderer.render_depth(blender_depth_path)
 
+        ### for debugging
+        # xml = env.model.get_xml()
+        # for processor in env._xml_processors:
+        #     xml = processor(xml)
+        # with open("robosuite_lift_processed.xml", "w") as f:
+        #     f.write(xml)
+
         metadata = {
             "config": asdict(run_config),
             "body_names": body_names,
