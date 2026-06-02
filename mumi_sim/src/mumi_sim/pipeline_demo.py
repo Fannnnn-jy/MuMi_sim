@@ -72,6 +72,11 @@ def run_static_bridge_demo(
     try:
         env.reset()
         _settle_env(env, run_config.settle_steps)
+        # obs, reward, done, info = env.step(action=np.zeros(7, dtype=env.action_spec[0].dtype))
+        # print(f"Initial step reward: {reward}, done: {done}, info: {info}")
+        # print(obs.keys())
+        # print(env)
+        # assert False 
         body_names = default_bridge_body_names(env.sim)
         arena_geom_names = default_arena_geom_names()
         cube_visual_geom_name = default_cube_visual_geom_name()
@@ -148,6 +153,8 @@ def run_static_bridge_demo(
 
         # scene_depth = renderer._mi_load_dict(scene_dict_depth)
         scene_rgb, params_rgb = renderer._mi_load_dict(scene_dict_rgb)
+        print(sorted(params_rgb.keys()))
+            
         t2 = time.perf_counter()
 
         # renderer.set_gripper_finger_lights(None, "left", True)
@@ -161,7 +168,6 @@ def run_static_bridge_demo(
         ]
 
         case_timings = []
-
         for prefix, left_on, right_on in cases:
             c0 = time.perf_counter()
 

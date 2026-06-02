@@ -115,7 +115,7 @@ class RobosuiteEnvConfig:
     robots: str = "Panda"
     controller: str = "BASIC" 
     control_freq: int = 20
-    horizon: int = 200
+    horizon: int = 20
     use_object_obs: bool = True
     has_offscreen_renderer: bool = True
 
@@ -135,6 +135,7 @@ def _make_env(
         "horizon": cfg.horizon,
         "initialization_noise": initialization_noise,
         "placement_initializer": placement_initializer,
+        "reward_shaping": True,
     }
     if cfg.controller:
         kwargs["controller_configs"] = suite.load_composite_controller_config(controller=cfg.controller) # robosuite/controllers/composite/composite_controller.py:31
