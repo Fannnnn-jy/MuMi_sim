@@ -10,6 +10,7 @@ os.environ['MKL_SERVICE_FORCE_INTEL'] = '1'
 os.environ.setdefault('MUJOCO_GL', 'egl')
 
 from pathlib import Path
+import csv
 import time
 
 import hydra
@@ -95,6 +96,42 @@ class Workspace:
             self._replay_iter = iter(self.replay_loader)
         return self._replay_iter
 
+    def _write_cubelift_log(self, episode, frame, step, sample_count, avg_height, max_height):
+        log_path = self.work_dir / 'cubelift.log'
+        fieldnames = [
+            'episode',
+            'frame',
+            'step',
+            'sample_count',
+            'cube_avg_height_above_table',
+            'cube_max_height_above_table',
+        ]
+        rows = []
+        if log_path.exists():
+            with log_path.open('r', newline='') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    try:
+                        old_episode = int(float(row.get('episode', -1)))
+                    except (TypeError, ValueError):
+                        old_episode = -1
+                    if old_episode < episode:
+                        rows.append(row)
+
+        row = {
+            'episode': int(episode),
+            'frame': int(frame),
+            'step': int(step),
+            'sample_count': int(sample_count),
+            'cube_avg_height_above_table': float(avg_height),
+            'cube_max_height_above_table': float(max_height),
+        }
+        with log_path.open('w', newline='') as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(rows)
+            writer.writerow(row)
+
     def eval(self):
         step, episode, total_reward = 0, 0, 0
         eval_until_episode = utils.Until(self.cfg.num_eval_episodes)
@@ -132,6 +169,20 @@ class Workspace:
 
         episode_step, episode_reward = 0, 0
         time_step = self.train_env.reset()
+        cube_height_stats = dict(sum=0.0, max=-np.inf, count=0)
+
+        def reset_cube_height_stats():
+            cube_height_stats['sum'] = 0.0
+            cube_height_stats['max'] = -np.inf
+            cube_height_stats['count'] = 0
+
+        def record_cube_height():
+            height = self.train_env.cube_height_above_table()
+            cube_height_stats['sum'] += height
+            cube_height_stats['max'] = max(cube_height_stats['max'], height)
+            cube_height_stats['count'] += 1
+
+        record_cube_height()
         self.replay_storage.add(time_step)
         self.train_video_recorder.init(time_step.observation)
         metrics = None
@@ -150,6 +201,19 @@ class Workspace:
                 self.train_video_recorder.save(f'{self.global_frame}.mp4')
                 elapsed_time, total_time = self.timer.reset()
                 episode_frame = episode_step * self.cfg.action_repeat
+                height_count = cube_height_stats['count']
+                if height_count > 0:
+                    avg_cube_height = cube_height_stats['sum'] / height_count
+                    max_cube_height = cube_height_stats['max']
+                    self._write_cubelift_log(
+                        self.global_episode,
+                        self.global_frame,
+                        self.global_step,
+                        height_count,
+                        avg_cube_height,
+                        max_cube_height,
+                    )
+
                 with self.logger.log_and_dump_ctx(self.global_frame,
                                                   ty='train') as log:
                     log('fps', episode_frame / elapsed_time)
@@ -169,6 +233,8 @@ class Workspace:
 
                 # reset env
                 time_step = self.train_env.reset()
+                reset_cube_height_stats()
+                record_cube_height()
                 self.replay_storage.add(time_step)
                 self.train_video_recorder.init(time_step.observation)
                 # try to save snapshot
@@ -211,6 +277,7 @@ class Workspace:
             t0 = time.perf_counter()
             time_step = self.train_env.step(action)
             add_timing('env_step', time.perf_counter() - t0)
+            record_cube_height()
             episode_reward += time_step.reward
             t0 = time.perf_counter()
             self.replay_storage.add(time_step)

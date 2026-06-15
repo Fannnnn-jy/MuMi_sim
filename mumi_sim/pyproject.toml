@@ -1,6 +1,13 @@
 [project]
 authors = [{name = "Fannnnn-jy", email = "bright_fjy@126.com"}]
-dependencies = ["mitsuba>=3.8.0,<4", "robosuite>=1.5.2,<2", "mujoco>=3.8.1,<4", "openexr>=3.4.12,<4", "imath>=0.0.2,<0.0.3"]
+dependencies = [
+    "mitsuba>=3.8.0,<4",
+    "robosuite>=1.5.2,<2",
+    "mujoco>=3.8.1,<4",
+    "openexr>=3.4.12,<4",
+    "imath>=0.0.2,<0.0.3",
+    "psutil>=7.2.2",
+]
 name = "mumi_sim"
 requires-python = ">=3.13,<3.14"
 version = "0.1.0"

@@ -89,7 +89,7 @@ hydra:
   job:
     chdir: true
   run:
-    dir: ./exp_local/2026.06.01/rgb
+    dir: ./exp_local/2026.06.01/rgb-smoke
   sweep:
     dir: ./exp/${now:%Y.%m.%d}/${now:%H%M}_${experiment}
     subdir: ${hydra.job.num}

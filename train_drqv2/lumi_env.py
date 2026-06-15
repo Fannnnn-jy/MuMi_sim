@@ -253,6 +253,11 @@ class LumiGraspEnv:
         frame = self._last_observation[-3:] if self._use_rgb_stack() else self._last_observation[:3]
         return frame.transpose(1, 2, 0)
 
+    def cube_height_above_table(self) -> float:
+        sim = self._env.sim
+        cube_geom = self._get_geom_state(sim, self._default_cube_visual_geom_name())
+        return float(cube_geom.position[2] - self._env.table_offset[2])
+
     def close(self):
         self._close_env(self._env)
 

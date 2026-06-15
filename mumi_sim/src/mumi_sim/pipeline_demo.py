@@ -152,8 +152,53 @@ def run_static_bridge_demo(
         # scene_dict_depth = renderer._scene_dict("depth")
 
         # scene_depth = renderer._mi_load_dict(scene_dict_depth)
-        scene_rgb, params_rgb = renderer._mi_load_dict(scene_dict_rgb)
-        print(sorted(params_rgb.keys()))
+        import os
+        import gc
+        import time
+        import psutil
+
+        proc = psutil.Process(os.getpid())
+
+        def print_res(tag):
+            mi = proc.memory_info()
+            print(
+                f"{tag:>6} | RSS/RES={mi.rss / 1024**3:.3f} GB | "
+                f"VMS={mi.vms / 1024**3:.3f} GB",
+                flush=True,
+            )
+
+        print_res("start")
+        import drjit as dr
+        for i in range(100):
+            scene_rgb, params_rgb = renderer._mi_load_dict(scene_dict_rgb)
+            del scene_rgb, params_rgb
+            # gc.collect()
+            # dr.flush_malloc_cache()
+            # dr.detail.clear_registry()
+            # dr.flush_kernel_cache()
+            # dr.detail.flush_cache()
+
+            gc.collect() 
+            gc.collect() 
+        
+            dr.kernel_history_clear() 
+            dr.flush_malloc_cache() 
+            # dr.malloc_clear_statistics() 
+            dr.flush_kernel_cache() 
+            import torch
+            torch.cuda.empty_cache()
+        
+            # if hasattr(dr, 'sync_thread'): 
+            #     dr.sync_thread() 
+            #     # dr.registry_clear() 
+            #     dr.set_flag(dr.JitFlag.Default, False) 
+
+            
+            if i % 5 == 0:
+                print_res(i)
+
+        print_res("end")
+        exit()
             
         t2 = time.perf_counter()
 
