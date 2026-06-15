@@ -62,6 +62,10 @@ bash run_train_lightdiff.sh   # observation_mode=light_diff
 bash run_train_rgb.sh         # observation_mode=rgb_stack
 ```
 
+---
+> Stuff below this line is not checked yet. 
+---
+
 ## Render an eval episode
 
 Render one episode from a trained checkpoint to an MP4:
