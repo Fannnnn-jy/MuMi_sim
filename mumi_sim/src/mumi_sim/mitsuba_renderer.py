@@ -410,6 +410,87 @@ class MitsubaRenderer:
 
         return Path(output_path)
 
+    # ========== Persistent scene (fixes load_dict memory leak; multi-integrator) ==========
+    @staticmethod
+    def _np_mat(transform) -> np.ndarray:
+        """ScalarTransform4f -> 4x4 float64 numpy (convention: T @ [x,y,z,1])."""
+        return np.asarray(transform.matrix).reshape(4, 4).astype(np.float64)
+
+    def _build_vertex_cache(self, params) -> None:
+        """Recover and cache each dynamic object's body-frame vertices from params (built once, shared across integrators)."""
+        self._dynamic_meshes = []
+        for name, obj in self.objects.items():
+            T_body_init = self._np_mat(
+                _transform_from_pose(obj.position, obj.quaternion_wxyz)
+            )
+            T_body_inv = np.linalg.inv(T_body_init)
+            keys = []
+            if obj.kind == "mesh_body":
+                for idx, spec in enumerate(obj.mesh_specs or []):
+                    keys.append(f"{obj.name}_{idx}_{spec.mesh_path.stem}.vertex_positions")
+            elif obj.kind == "cube":
+                keys.append(f"{obj.name}.vertex_positions")
+            for key in keys:
+                if key not in params:
+                    continue
+                wv = np.asarray(params[key]).reshape(-1, 3).astype(np.float64)
+                homo = np.concatenate([wv, np.ones((wv.shape[0], 1))], axis=1).T
+                body_homo = T_body_inv @ homo
+                self._dynamic_meshes.append((key, name, body_homo))
+
+    def build_persistent_scene(self, integrator: str = "path") -> None:
+        """Load one integrator's scene with optimize=False. Vertex cache is built on first call and shared across integrators."""
+        if not hasattr(self, "_persistent_scenes"):
+            self._persistent_scenes = {}
+            self._persistent_params = {}
+        scene_dict = self._scene_dict(integrator)
+        scene = mi.load_dict(scene_dict, optimize=False)
+        params = mi.traverse(scene)
+        self._persistent_scenes[integrator] = scene
+        self._persistent_params[integrator] = params
+        # Build vertex cache only once (geometry is identical across integrators)
+        if not getattr(self, "_dynamic_meshes", None):
+            self._build_vertex_cache(params)
+        self._persistent_lights = list(self.gripper_finger_lights.values())
+
+    def update_persistent_scene(self, integrator: str = "path"):
+        """Call every step: first call auto-builds this integrator; afterwards only updates vertices + lights/camera.
+        Returns (scene, params) for the caller's convenience."""
+        if not hasattr(self, "_persistent_scenes") or integrator not in self._persistent_scenes:
+            self.build_persistent_scene(integrator)
+            return self._persistent_scenes[integrator], self._persistent_params[integrator]
+
+        params = self._persistent_params[integrator]
+        # 1) Dynamic mesh/cube vertices (using shared cache)
+        for key, body_name, body_homo in self._dynamic_meshes:
+            if key not in params:
+                continue
+            obj = self.objects[body_name]
+            T_body = self._np_mat(
+                _transform_from_pose(obj.position, obj.quaternion_wxyz)
+            )
+            world = (T_body @ body_homo)[:3]
+            flat = np.ascontiguousarray(world.T.reshape(-1), dtype=np.float32)
+            params[key] = mi.Float(flat)
+        # 2) Spot light to_world
+        for light in self._persistent_lights:
+            lkey = f"{light.name}.to_world"
+            if lkey in params:
+                parent = self.objects[light.parent_body_name]
+                params[lkey] = (
+                    _transform_from_pose(parent.position, parent.quaternion_wxyz)
+                    @ mi.ScalarTransform4f.translate(light.local_position)
+                )
+        # 3) Camera
+        if "sensor.to_world" in params:
+            params["sensor.to_world"] = (
+                _transform_from_pose(self.camera.position, self.camera.quaternion_wxyz)
+                @ mi.ScalarTransform4f.rotate([0.0, 1.0, 0.0], 180.0)
+            )
+        params.update()
+        return self._persistent_scenes[integrator], self._persistent_params[integrator]
+    # ========== End persistent scene ==========
+
     def render_depth(self, output_path: str | Path) -> Path:
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
