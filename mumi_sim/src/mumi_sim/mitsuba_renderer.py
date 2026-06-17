@@ -410,6 +410,87 @@ class MitsubaRenderer:
 
         return Path(output_path)
 
+    # ========== 持久场景（修复 load_dict 内存泄漏，支持多 integrator）==========
+    @staticmethod
+    def _np_mat(transform) -> np.ndarray:
+        """ScalarTransform4f -> 4x4 float64 numpy（约定: T @ [x,y,z,1]）。"""
+        return np.asarray(transform.matrix).reshape(4, 4).astype(np.float64)
+
+    def _build_vertex_cache(self, params) -> None:
+        """从给定 params 反推并缓存每个动态物体的 body 坐标系顶点（只需建一次，各 integrator 共用）。"""
+        self._dynamic_meshes = []
+        for name, obj in self.objects.items():
+            T_body_init = self._np_mat(
+                _transform_from_pose(obj.position, obj.quaternion_wxyz)
+            )
+            T_body_inv = np.linalg.inv(T_body_init)
+            keys = []
+            if obj.kind == "mesh_body":
+                for idx, spec in enumerate(obj.mesh_specs or []):
+                    keys.append(f"{obj.name}_{idx}_{spec.mesh_path.stem}.vertex_positions")
+            elif obj.kind == "cube":
+                keys.append(f"{obj.name}.vertex_positions")
+            for key in keys:
+                if key not in params:
+                    continue
+                wv = np.asarray(params[key]).reshape(-1, 3).astype(np.float64)
+                homo = np.concatenate([wv, np.ones((wv.shape[0], 1))], axis=1).T
+                body_homo = T_body_inv @ homo
+                self._dynamic_meshes.append((key, name, body_homo))
+
+    def build_persistent_scene(self, integrator: str = "path") -> None:
+        """用 optimize=False load 一个 integrator 的场景。顶点缓存首次建立、各 integrator 共用。"""
+        if not hasattr(self, "_persistent_scenes"):
+            self._persistent_scenes = {}
+            self._persistent_params = {}
+        scene_dict = self._scene_dict(integrator)
+        scene = mi.load_dict(scene_dict, optimize=False)
+        params = mi.traverse(scene)
+        self._persistent_scenes[integrator] = scene
+        self._persistent_params[integrator] = params
+        # 顶点缓存只建一次（几何在所有 integrator 间一致）
+        if not getattr(self, "_dynamic_meshes", None):
+            self._build_vertex_cache(params)
+        self._persistent_lights = list(self.gripper_finger_lights.values())
+
+    def update_persistent_scene(self, integrator: str = "path"):
+        """每步调用：首次自动 build 该 integrator；之后只更新顶点 + 灯光/相机。
+        返回 (scene, params) 方便调用方直接使用。"""
+        if not hasattr(self, "_persistent_scenes") or integrator not in self._persistent_scenes:
+            self.build_persistent_scene(integrator)
+            return self._persistent_scenes[integrator], self._persistent_params[integrator]
+
+        params = self._persistent_params[integrator]
+        # 1) 动态 mesh/cube 顶点（用共用缓存）
+        for key, body_name, body_homo in self._dynamic_meshes:
+            if key not in params:
+                continue
+            obj = self.objects[body_name]
+            T_body = self._np_mat(
+                _transform_from_pose(obj.position, obj.quaternion_wxyz)
+            )
+            world = (T_body @ body_homo)[:3]
+            flat = np.ascontiguousarray(world.T.reshape(-1), dtype=np.float32)
+            params[key] = mi.Float(flat)
+        # 2) spot 灯 to_world
+        for light in self._persistent_lights:
+            lkey = f"{light.name}.to_world"
+            if lkey in params:
+                parent = self.objects[light.parent_body_name]
+                params[lkey] = (
+                    _transform_from_pose(parent.position, parent.quaternion_wxyz)
+                    @ mi.ScalarTransform4f.translate(light.local_position)
+                )
+        # 3) 相机
+        if "sensor.to_world" in params:
+            params["sensor.to_world"] = (
+                _transform_from_pose(self.camera.position, self.camera.quaternion_wxyz)
+                @ mi.ScalarTransform4f.rotate([0.0, 1.0, 0.0], 180.0)
+            )
+        params.update()
+        return self._persistent_scenes[integrator], self._persistent_params[integrator]
+    # ========== 持久场景结束 ==========
+
     def render_depth(self, output_path: str | Path) -> Path:
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)

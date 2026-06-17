@@ -305,9 +305,8 @@ class LumiGraspEnv:
 
     def _render_observation(self) -> np.ndarray:
         """ambient + left diff light + right diff light, each with 3 channels RGB"""
-        self._sync_renderer()
-        scene_dict = self._renderer._scene_dict("path")
-        scene, params = self._renderer._mi_load_dict(scene_dict)
+        self._sync_renderer()                          # 不变，仍要把位姿写进 RenderObject
+        scene, params = self._renderer.update_persistent_scene("path")
         try:
             ambient = self._render_lights(scene, params, left_on=False, right_on=False)
             left = self._render_lights(scene, params, left_on=True, right_on=False)
@@ -323,7 +322,7 @@ class LumiGraspEnv:
                 axis=0,
             )
         finally:
-            del scene, params
+            pass
 
         ### visualization for debugging
         # import imageio.v2 as imageio
@@ -345,8 +344,7 @@ class LumiGraspEnv:
     def _render_observation_rgb(self) -> np.ndarray:
         """Temporal RGB stack, matching DrQ-v2's 3-frame pixel input."""
         self._sync_renderer()
-        scene_dict = self._renderer._scene_dict("path")
-        scene, params = self._renderer._mi_load_dict(scene_dict)
+        scene, params = self._renderer.update_persistent_scene("path")
         try:
             ambient = self._render_lights(scene, params, left_on=False, right_on=False)
             rgb = self._do_gamma_and_to_chw_uint8(ambient, self.cfg.observation_exposure)
@@ -357,7 +355,7 @@ class LumiGraspEnv:
                 self._rgb_frames.append(rgb)
             obs = np.concatenate(list(self._rgb_frames), axis=0)
         finally:
-            del scene, params
+            pass
 
         # import imageio.v2 as imageio
         # vis_dir = Path("debug_obs_vis")
@@ -381,10 +379,8 @@ class LumiGraspEnv:
     def _render_observation_rgbd(self) -> np.ndarray:
         """Ambient RGB plus one metric depth channel."""
         self._sync_renderer()
-        scene_rgb_dict = self._renderer._scene_dict("path")
-        scene_depth_dict = self._renderer._scene_dict("depth")
-        scene_rgb, params_rgb = self._renderer._mi_load_dict(scene_rgb_dict)
-        scene_depth, params_depth = self._renderer._mi_load_dict(scene_depth_dict)
+        scene_rgb, params_rgb = self._renderer.update_persistent_scene("path")
+        scene_depth, params_depth = self._renderer.update_persistent_scene("depth")
 
         try:
             ambient = self._render_lights(scene_rgb, params_rgb, left_on=False, right_on=False)
@@ -397,7 +393,7 @@ class LumiGraspEnv:
                 axis=0,
             )
         finally:
-            del scene_rgb, params_rgb, scene_depth, params_depth
+                    pass
 
         # ## visualization for debugging
         # import imageio.v2 as imageio

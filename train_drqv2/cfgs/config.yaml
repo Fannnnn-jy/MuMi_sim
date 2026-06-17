@@ -29,7 +29,7 @@ env:
   cube_reference_pos: [0.0, 0.0, 0.8]
   cube_z_offset: 0.01
   robot_initialization_noise: 0.0
-  mitsuba_flush_interval: 1000
+  mitsuba_flush_interval: 0
   # observation_mode: ???
   observation_mode: rgb_stack
   frame_stack: 3
