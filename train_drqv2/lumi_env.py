@@ -305,7 +305,7 @@ class LumiGraspEnv:
 
     def _render_observation(self) -> np.ndarray:
         """ambient + left diff light + right diff light, each with 3 channels RGB"""
-        self._sync_renderer()                          # 不变，仍要把位姿写进 RenderObject
+        self._sync_renderer()                          # writes latest poses into RenderObject
         scene, params = self._renderer.update_persistent_scene("path")
         try:
             ambient = self._render_lights(scene, params, left_on=False, right_on=False)

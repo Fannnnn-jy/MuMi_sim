@@ -410,14 +410,14 @@ class MitsubaRenderer:
 
         return Path(output_path)
 
-    # ========== 持久场景（修复 load_dict 内存泄漏，支持多 integrator）==========
+    # ========== Persistent scene (fixes load_dict memory leak; multi-integrator) ==========
     @staticmethod
     def _np_mat(transform) -> np.ndarray:
-        """ScalarTransform4f -> 4x4 float64 numpy（约定: T @ [x,y,z,1]）。"""
+        """ScalarTransform4f -> 4x4 float64 numpy (convention: T @ [x,y,z,1])."""
         return np.asarray(transform.matrix).reshape(4, 4).astype(np.float64)
 
     def _build_vertex_cache(self, params) -> None:
-        """从给定 params 反推并缓存每个动态物体的 body 坐标系顶点（只需建一次，各 integrator 共用）。"""
+        """Recover and cache each dynamic object's body-frame vertices from params (built once, shared across integrators)."""
         self._dynamic_meshes = []
         for name, obj in self.objects.items():
             T_body_init = self._np_mat(
@@ -439,7 +439,7 @@ class MitsubaRenderer:
                 self._dynamic_meshes.append((key, name, body_homo))
 
     def build_persistent_scene(self, integrator: str = "path") -> None:
-        """用 optimize=False load 一个 integrator 的场景。顶点缓存首次建立、各 integrator 共用。"""
+        """Load one integrator's scene with optimize=False. Vertex cache is built on first call and shared across integrators."""
         if not hasattr(self, "_persistent_scenes"):
             self._persistent_scenes = {}
             self._persistent_params = {}
@@ -448,20 +448,20 @@ class MitsubaRenderer:
         params = mi.traverse(scene)
         self._persistent_scenes[integrator] = scene
         self._persistent_params[integrator] = params
-        # 顶点缓存只建一次（几何在所有 integrator 间一致）
+        # Build vertex cache only once (geometry is identical across integrators)
         if not getattr(self, "_dynamic_meshes", None):
             self._build_vertex_cache(params)
         self._persistent_lights = list(self.gripper_finger_lights.values())
 
     def update_persistent_scene(self, integrator: str = "path"):
-        """每步调用：首次自动 build 该 integrator；之后只更新顶点 + 灯光/相机。
-        返回 (scene, params) 方便调用方直接使用。"""
+        """Call every step: first call auto-builds this integrator; afterwards only updates vertices + lights/camera.
+        Returns (scene, params) for the caller's convenience."""
         if not hasattr(self, "_persistent_scenes") or integrator not in self._persistent_scenes:
             self.build_persistent_scene(integrator)
             return self._persistent_scenes[integrator], self._persistent_params[integrator]
 
         params = self._persistent_params[integrator]
-        # 1) 动态 mesh/cube 顶点（用共用缓存）
+        # 1) Dynamic mesh/cube vertices (using shared cache)
         for key, body_name, body_homo in self._dynamic_meshes:
             if key not in params:
                 continue
@@ -472,7 +472,7 @@ class MitsubaRenderer:
             world = (T_body @ body_homo)[:3]
             flat = np.ascontiguousarray(world.T.reshape(-1), dtype=np.float32)
             params[key] = mi.Float(flat)
-        # 2) spot 灯 to_world
+        # 2) Spot light to_world
         for light in self._persistent_lights:
             lkey = f"{light.name}.to_world"
             if lkey in params:
@@ -481,7 +481,7 @@ class MitsubaRenderer:
                     _transform_from_pose(parent.position, parent.quaternion_wxyz)
                     @ mi.ScalarTransform4f.translate(light.local_position)
                 )
-        # 3) 相机
+        # 3) Camera
         if "sensor.to_world" in params:
             params["sensor.to_world"] = (
                 _transform_from_pose(self.camera.position, self.camera.quaternion_wxyz)
@@ -489,7 +489,7 @@ class MitsubaRenderer:
             )
         params.update()
         return self._persistent_scenes[integrator], self._persistent_params[integrator]
-    # ========== 持久场景结束 ==========
+    # ========== End persistent scene ==========
 
     def render_depth(self, output_path: str | Path) -> Path:
         path = Path(output_path)
